@@ -6,7 +6,6 @@ import pandas as pd
 import xarray as xr
 import pickle
 import os
-import julian
 import datetime
 from datetime import timezone
 
@@ -45,7 +44,7 @@ def build_pd(stn_id):
     cols = ['Year','Month','Day','Hour','Minutes','Temp','RH','Dir','Spd','Max','U','V']
     data = np.hstack((years,months,days,hours,minutes,temp,rel_hum,wind_dir,wind_spd,wind_max,u,v))
     data = pd.DataFrame(data=data,columns=cols)
-    pickle.dump(data,open('pickles/'+stn_id+'_20yr_RAWS.p','wb'))
+    pickle.dump(data,open('../Data/pickles/'+stn_id+'_20yr_RAWS.p','wb'))
     return data
 
 def plot_RAWS(data,stn_id,file):

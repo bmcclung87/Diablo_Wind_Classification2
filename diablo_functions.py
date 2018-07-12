@@ -5,11 +5,64 @@ import pandas as pd
 import xarray as xr
 import pickle
 import metpy.calc as mpcalc
-
+from MesoPy import Meso
 from metpy.cbook import get_test_data
 from metpy.plots import add_metpy_logo, SkewT
 from metpy.units import units
 from scipy.constants import convert_temperature
+
+def build_pd(stn_id):
+    key = 'b1c91e501782441d97ac056e2501b5b0'
+    m = Meso(token=key)
+    time = m.timeseries(stid=stn_id, start='199801010000', end='201801010000')
+    if time is not None:
+        ob = time['STATION'][0]
+        params = ob['OBSERVATIONS'].keys()
+    
+        dates = ob['OBSERVATIONS']['date_time']
+        years = float(dates[0][0:4])
+        months = float(dates[0][5:7])
+        hours = float(dates[0][8:10])
+        days = float(dates[0][11:13])
+
+        for i in range(len(dates)-1):
+            years = np.vstack((years,float(dates[i+1][0:4])))
+            months = np.vstack((months,float(dates[i+1][5:7])))
+            days = np.vstack((days,float(dates[i+1][8:10])))
+            hours = np.vstack((hours,float(dates[i+1][11:13])))
+    
+    
+        if 'air_temp_set_1' in params:
+            temp = np.expand_dims(np.array(ob['OBSERVATIONS']['air_temp_set_1'], dtype=np.float),axis=1)
+        else:
+            temp = np.full_like(days,np.nan)
+    
+        if 'wind_direction_set_1' in params:
+            wind_dir = np.expand_dims(np.array(ob['OBSERVATIONS']['wind_direction_set_1'], dtype=np.float),axis=1) * units.degrees
+        else:
+            wind_dir = np.full_like(days,np.nan)
+        
+        if 'wind_speed_set_1' in params:
+            wind_spd = np.expand_dims(np.array(ob['OBSERVATIONS']['wind_speed_set_1'], dtype=np.float),axis=1) * 1.9438445
+        else:
+            wind_spd = np.full_like(days,np.nan)
+    
+        if 'peak_wind_speed_set_1' in params:
+            wind_max = np.expand_dims(np.array(ob['OBSERVATIONS']['peak_wind_speed_set_1'], dtype=np.float),axis=1) * 1.9438445
+        else: 
+            wind_max = np.full_like(days,np.nan)
+    
+        if 'relative_humidity_set_1' in params:
+            rel_hum = np.expand_dims(np.array(ob['OBSERVATIONS']['relative_humidity_set_1'],dtype=np.float),axis=1)
+        else:
+            rel_hum = np.full_like(days,np.nan)
+    
+        u, v = mpcalc.get_wind_components(wind_spd, wind_dir)
+        minutes = np.expand_dims(np.ones(len(hours))*55.0,axis=1)
+        cols = ['Year','Month','Day','Hour','Minutes','Temp','RH','Dir','Spd','Max','U','V']
+        data = np.hstack((years,months,days,hours,minutes,temp,rel_hum,wind_dir,wind_spd,wind_max,u,v))
+        data = pd.DataFrame(data=data,columns=cols)
+        pickle.dump(data,open('../Data/pickles/'+stn_id+'_20yr_RAWS.p','wb'))
 
 #temperature input is celcius, rh is percent
 def calc_dewpt(temp,rh):
