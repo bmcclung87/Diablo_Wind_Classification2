@@ -1,0 +1,22 @@
+import numpy as np
+import pandas as pd
+import os
+
+class ASOS_stn:
+    
+    def __init__(self,file_num,name,lat,lon,elev,data,por):
+        self.file_num = file_num
+        self.name = name
+        self.lat = lat
+        self.lon = lon
+        self.elev = elev
+        self.data = data
+        self.por = por
+        
+ASOS_dir = '../Data/NCEI_data/
+data_dir = ASOS_dir+'dat/'
+stn_dir = ASOS_dir+'stn/'
+
+stn_files = os.listdir(ASOS_dir+stn_dir)
+
+
